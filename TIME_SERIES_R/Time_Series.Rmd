@@ -1,0 +1,101 @@
+---
+title: "TIME-SERIES ANALYSIS"
+author: "MAHALAKSHMI"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r global_options, include=FALSE,cache=FALSE}
+knitr::opts_chunk$set(echo = FALSE,echo=FALSE, message=FALSE, warning=FALSE,error=TRUE)
+```
+
+Loading the relevant R packages
+
+```{r packages}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggvis)
+```
+
+Loading the relevant datasets
+
+```{r LOADING}
+Mat1 <- read.table("C:/Users/Mash/Desktop/Kaggle/Time_Series_R/Mat1.csv",header=T,sep = ",",row.names =1)
+Mat2 <- read.table("C:/Users/Mash/Desktop/Kaggle/Time_Series_R/Mat2.csv",header=T,sep = ",", row.names = 1)
+```
+
+Converting data to Time series format
+
+```{r TS type}
+Mat1 <- ts(Mat1$VALUE, start=c(1948,1), freq=12)
+Mat2 <- ts(Mat2$VALUE, start=c(1948,1), freq=12)
+str(Mat1)
+str(Mat2)
+```
+Exploring the summary statistics
+
+```{r SUMMARY}
+summary(Mat1)
+summary(Mat2)
+```
+
+Plotting the Time series behavior of the two data sets Mat1 and Mat2 with the regression line showing the general trend.The Mat1 data tends to be a lot more stationary showing no trend but MAt2 data shows an upward trend.
+
+```{r PLOTTING TIME SERIES}
+ts.plot(Mat1,Mat2,col=c("#20C345","red"))
+abline(reg = lm(Mat1~time(Mat1)),col = c("#20C345"))
+abline(reg = lm(Mat2~time(Mat2)),col = c("red"))
+```
+
+Showing the Decomposition plot
+
+```{r using GGPLOT}
+library(ggfortify)
+#autoplot(Mat1,ts.colour = 'red')
+#autoplot(Mat2,ts.colour = 'green')
+autoplot(stl(Mat1, s.window = 'periodic'), ts.colour = 'green')
+autoplot(stl(Mat2, s.window = 'periodic'), ts.colour = 'red')
+```
+
+Plotting the ACF for both the data.
+Looks like a gradual slowdown for both the data sets indicating a AR model
+
+```{r ACF}
+autoplot(acf(Mat1,plot = FALSE))
+autoplot(acf(Mat2,plot = FALSE))
+
+```
+
+Taking the Differentiation and then the ACF shows a gradual slowdown.
+
+```{r DIFF}
+autoplot(acf(diff(Mat1,plot = FALSE)))
+autoplot(acf(diff(Mat2,plot = FALSE)))
+```
+
+Taking the PACF to see if there is a cut off or a gradual slowdown.
+The Plot shows a Gradual slowdown indicating a ARIMA model
+
+```{r PACF}
+autoplot(pacf(diff(Mat1),plot = FALSE))
+
+```
+```{r ARIMA}
+library(forecast)
+Mat1.arima <-arima(Mat1, order = c(2,1,2))
+Mat2.arima <- arima(Mat2,order = c(2,1,2))
+Mat1.ar <-arima(Mat1, order = c(2,0,0))
+Mat1.ma <-arima(Mat1, order = c(0,0,2))
+print (Mat1.arima)
+```
+
+
+Plotting the details of the ARIMA (2,1,2) model
+
+```{r PLOTTING}
+plot(forecast(Mat1.arima, h=24))
+plot(forecast(Mat2.arima, h=24))
+```
+
